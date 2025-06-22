@@ -117,6 +117,9 @@ sudo systemctl start cms-log.service
 sudo systemctl start cms.service
 sudo systemctl start cms-ranking.service
 
+sudo systemctl daemon-reexec
+sudo systemctl daemon-reload
+
 #Domain
 read -p "Do you want to link the CMS to your website? [Y/N] (default N): " WEB_OPTION
 WEB_OPTION=${WEB_OPTION:-N}
