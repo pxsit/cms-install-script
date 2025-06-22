@@ -1,21 +1,32 @@
 #!/usr/bin/env bash
+
 #Prerequisites
 set -e
 trap 'echo "Error on line $LINENO: $BASH_COMMAND"; exit 1' ERR
 CUR_DIR=$(pwd)
 CUR_USER=$(whoami)
+read -p "Would you like a Full Install or a Minimal Install? [F/M] (default F): " INSTALL_OPT
+INSTALL_OPT=${INSTALL_OPT:-F}
+INSTALL_OPT=${INSTALL_OPT,,}
 sudo apt-get update
+if [[ "$INSTALL_OPT" == "f" || "$INSTALL_OPT" == "full" ]]; then
+	sudo apt-get install -y \
+	    build-essential openjdk-11-jdk-headless fp-compiler postgresql postgresql-client \
+	    python3.12 cppreference-doc-en-html cgroup-lite libcap-dev zip \
+	    python3.12-dev libpq-dev libcups2-dev libyaml-dev nginx-full php-cli \
+	    texlive-latex-base a2ps ghc rustc mono-mcs pypy3 python3-pycryptodome python3.12-venv git
+	read -p "Do you want to install additional Pascal Units? [Y/N] (default N): " PASCAL_UNITS_INSTALL
+	PASCAL_UNITS_INSTALL=${PASCAL_UNITS_INSTALL:-N}
+	PASCAL_UNITS_INSTALL=${PASCAL_UNITS_INSTALL,,}
+	if [[ "$PASCAL_UNITS_INSTALL" == "y" || "$PASCAL_UNITS_INSTALL" == "yes" ]]; then
+	    sudo apt-get install -y fp-units-base fp-units-fcl fp-units-misc fp-units-math fp-units-rtl
+	fi
+else
 sudo apt-get install -y \
-    build-essential openjdk-11-jdk-headless fp-compiler postgresql postgresql-client \
-    python3.12 cppreference-doc-en-html cgroup-lite libcap-dev zip \
-    python3.12-dev libpq-dev libcups2-dev libyaml-dev nginx-full php-cli \
-    texlive-latex-base a2ps ghc rustc mono-mcs pypy3 python3-pycryptodome python3.12-venv git
-
-read -p "Do you want to install additional Pascal Units? [Y/N] (default N): " PASCAL_UNITS_INSTALL
-PASCAL_UNITS_INSTALL=${PASCAL_UNITS_INSTALL:-N}
-PASCAL_UNITS_INSTALL=${PASCAL_UNITS_INSTALL,,}
-if [[ "$PASCAL_UNITS_INSTALL" == "y" || "$PASCAL_UNITS_INSTALL" == "yes" ]]; then
-    sudo apt-get install -y fp-units-base fp-units-fcl fp-units-misc fp-units-math fp-units-rtl
+    build-essential postgresql postgresql-client \
+    python3.12 cgroup-lite libcap-dev zip \
+    python3.12-dev libpq-dev libcups2-dev libyaml-dev \
+    python3-pycryptodome python3.12-venv git cppreference-doc-en-html
 fi
 
 #Install CMS
@@ -57,7 +68,6 @@ $CUR_DIR/cms_venv/bin/cmsInitDB
 sudo mkdir /usr/share/cms
 sudo mkdir /usr/share/cms/docs
 sudo ln -s /usr/share/cppreference/doc/html/en/ /usr/share/cms/docs/cpp
-
 #Create CMS Services
 sudo tee "$CUR_DIR/resource-service.conf" > /dev/null <<EOF
 CONTEST_ID=ALL
@@ -106,6 +116,7 @@ Slice=cms.slice
 WantedBy=multi-user.target
 EOF
 
+sudo chmod 666 $CUR_DIR/resource-service.conf 
 sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
 
@@ -113,18 +124,19 @@ sudo systemctl enable cms-log.service
 sudo systemctl enable cms.service
 sudo systemctl enable cms-ranking.service
 
+sudo systemctl daemon-reexec
+sudo systemctl daemon-reload
+
 sudo systemctl start cms-log.service
 sudo systemctl start cms.service
 sudo systemctl start cms-ranking.service
-
-sudo systemctl daemon-reexec
-sudo systemctl daemon-reload
 
 #Domain
 read -p "Do you want to link the CMS to your website? [Y/N] (default N): " WEB_OPTION
 WEB_OPTION=${WEB_OPTION:-N}
 WEB_OPTION=${WEB_OPTION,,}
 if [[ "$WEB_OPTION" == "y" || "$WEB_OPTION" == "yes" ]]; then
+	sudo apt-get install nginx-full
 	read -p "Contest Server Domain (Example : contest.cmswebsite.com): " CON_SERV
 	read -p "Admin Server Domain (Example : admin.cmswebsite.com): " ADMIN_SERV
 	read -p "Rankings Server Domain (Example : rankings.cmswebsite.com): " RANK_SERV
