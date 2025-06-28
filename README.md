@@ -28,3 +28,9 @@ curl -sL https://raw.githubusercontent.com/pxsit/cms-install-script/refs/heads/m
 7. (Recommend) Add an SSL certificate using certbot
 8. Once certbot have finished or you decided you don't want an SSL certificate change the Proxied status to Proxied.
 
+Ranking Web Server (RWS) usage
+------------------------------
+If your CMS only have one contest, RWS will work normally without configuration
+But if more than one contest is present, you need to configure RWS by editing resource-service.conf in your cms directory
+Configuration :
+  Change contest id to the contest you want to have the RWS linked to (beware, other contest will not become accessible)
