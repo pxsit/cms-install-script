@@ -130,9 +130,6 @@ sudo systemctl enable cms-log.service
 sudo systemctl enable cms.service
 sudo systemctl enable cms-ranking.service
 
-sudo systemctl daemon-reexec
-sudo systemctl daemon-reload
-
 sudo systemctl start cms-log.service
 sudo systemctl start cms.service
 sudo systemctl start cms-ranking.service
