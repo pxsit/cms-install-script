@@ -13,7 +13,7 @@ curl -sL https://raw.githubusercontent.com/pxsit/cms-install-script/refs/heads/m
 
 Installation with Website Integration via Cloudflare
 ----------------------------------------------------
-For ease of demonstration my websites name will be grader.cms.com, admin.cms.com, and leaderboard.cms.com
+For ease of demonstration my websites name will be https://grader.cms.com, https://admin.cms.com, and https://leaderboard.cms.com
 1. Make sure that your domain have an Active status on Cloudflare and that you have port 443,80 Forwarded
 2. Go to DNS -> Records
 3. Add 3 type A records with the name of each records being the name you want your subdomain to be and the IPV4 address be your server's IPV4 address and with Proxied status DNS only.
@@ -38,7 +38,7 @@ The contest id will be shown when editing a contest in the admin tab as shown in
 
 ![image](https://github.com/user-attachments/assets/55967026-0c1d-474c-8c92-8e9c783c0b8a)
 
-After confiuration, restart cms by runnning the following command
+After confiuration, restart the cms services by runnning the following command
 ```bash
 sudo systemctl restart cms-log
 sudo systemctl restart cms
