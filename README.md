@@ -1,5 +1,6 @@
 Contest Management System Installation Script
 =============================================
+**This is a convenience script that is used to install [CMS](http://cms-dev.github.io/) via the Python Virtual Environment (venv) method**
 
 Basic Installation
 ------------------
