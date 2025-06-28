@@ -12,6 +12,7 @@ curl -sL https://raw.githubusercontent.com/pxsit/cms-install-script/refs/heads/m
 3. Access at localhost:8888 localhost:8889 localhost:8890
 
 Installation with Website Integration via Cloudflare
+----------------------------------------------------
 For ease of demonstration my websites name will be grader.cms.com, admin.cms.com, and leaderboard.cms.com
 1. Make sure that your domain have an Active status on Cloudflare and that you have port 443,80 Forwarded
 2. Go to DNS -> Records
