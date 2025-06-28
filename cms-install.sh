@@ -5,6 +5,8 @@ set -e
 trap 'echo "Error on line $LINENO: $BASH_COMMAND"; exit 1' ERR
 CUR_DIR=$(pwd)
 CUR_USER=$(whoami)
+
+#Package Install
 read -p "Would you like a Full Install or a Minimal Install? [F/M] (default F): " INSTALL_OPT
 INSTALL_OPT=${INSTALL_OPT:-F}
 INSTALL_OPT=${INSTALL_OPT,,}
@@ -13,9 +15,9 @@ if [[ "$INSTALL_OPT" == "f" || "$INSTALL_OPT" == "full" ]]; then
 	sudo apt-get install -y \
 	    build-essential openjdk-11-jdk-headless fp-compiler postgresql postgresql-client \
 	    python3.12 cppreference-doc-en-html cgroup-lite libcap-dev zip \
-	    python3.12-dev libpq-dev libcups2-dev libyaml-dev nginx-full php-cli \
+	    python3.12-dev libpq-dev libcups2-dev libyaml-dev php-cli \
 	    texlive-latex-base a2ps ghc rustc mono-mcs pypy3 python3-pycryptodome python3.12-venv git
-	read -p "Do you want to install additional Pascal Units? [Y/N] (default Y): " PASCAL_UNITS_INSTALL
+	read -p "Do you want to install additional Free Pascal Units? [Y/N] (default Y): " PASCAL_UNITS_INSTALL
 	PASCAL_UNITS_INSTALL=${PASCAL_UNITS_INSTALL:-Y}
 	PASCAL_UNITS_INSTALL=${PASCAL_UNITS_INSTALL,,}
 	if [[ "$PASCAL_UNITS_INSTALL" == "y" || "$PASCAL_UNITS_INSTALL" == "yes" ]]; then
