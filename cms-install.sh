@@ -39,7 +39,7 @@ CONFIG_PATH="/usr/local/etc/cms.toml"
 pip install -r requirements.txt
 pip install .
 SECRET_KEY=$(python3 -c 'from cmscommon import crypto; print(crypto.get_hex_random_key())')
-
+sudo apt remove python3-pycryptodome
 #Database
 read -p "Enter Database name [cmsdb]: " PG_DB
 read -p "Enter Database username [cmsuser]: " PG_USER
