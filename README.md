@@ -1,5 +1,5 @@
-Contest Management System
-=========================
+Contest Management System Installation Script
+=============================================
 
 A (not) simple script to help you install CMS https://github.com/cms-dev/cms Easily
 How to use
