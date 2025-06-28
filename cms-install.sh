@@ -3,7 +3,7 @@
 #Prerequisites
 set -e
 trap 'echo "Error on line $LINENO: $BASH_COMMAND"; exit 1' ERR
-CUR_DIR=$(pwd)
+CUR_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 CUR_USER=$(whoami)
 
 #Package Install
@@ -43,13 +43,14 @@ pip install .
 SECRET_KEY=$(python3 -c 'from cmscommon import crypto; print(crypto.get_hex_random_key())')
 #Database
 read -p "Enter Database name [cmsdb]: " PG_DB
+PG_DB=${PG_DB:-cmsdb}
 read -p "Enter Database username [cmsuser]: " PG_USER
 PG_USER=${PG_USER:-cmsuser}
-PG_DB=${PG_DB:-cmsdb}
-while [[ -z "$PG_PASS" ]]; do
-	read -s -p "Enter Database password: " PG_PASS
-	echo
-done
+read -s -p "Enter Database password (Blank for Random): " PG_PASS
+echo
+if [ -z "$PG_PASS" ]; then
+    PG_PASS=$(< /dev/urandom tr -dc 'A-Za-z0-9!@#$%^&*()_+=' | head -c32)
+fi
 ESC_USER=$(printf '%q' "$PG_USER")
 ESC_PASS=$(env PG_PASS="$PG_PASS" python3 -c "import urllib.parse, os; print(urllib.parse.quote(os.environ['PG_PASS']))")
 ESC_DB=$(printf '%q' "$PG_DB")
@@ -137,7 +138,7 @@ read -p "Do you want to link the CMS to your website? [Y/N] (default N): " WEB_O
 WEB_OPTION=${WEB_OPTION:-N}
 WEB_OPTION=${WEB_OPTION,,}
 if [[ "$WEB_OPTION" == "y" || "$WEB_OPTION" == "yes" ]]; then
-	sudo apt-get install nginx-full
+	sudo apt-get install -y nginx-full
 	read -p "Contest Server Domain (Example : contest.cmswebsite.com): " CON_SERV
 	read -p "Admin Server Domain (Example : admin.cmswebsite.com): " ADMIN_SERV
 	read -p "Rankings Server Domain (Example : rankings.cmswebsite.com): " RANK_SERV
