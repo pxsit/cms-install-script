@@ -32,5 +32,7 @@ Ranking Web Server (RWS) usage
 ------------------------------
 If your CMS only have one contest, RWS will work normally without configuration
 But if more than one contest is present, you need to configure RWS by editing resource-service.conf in your cms directory
-Configuration :
-  Change contest id to the contest you want to have the RWS linked to (beware, other contest will not become accessible)
+by changing the contest id to the contest id you want to have the RWS linked to (beware, other contest will not become accessible)
+
+The contest id will be shown when editing a contest in the admin tab as shown in the image
+![image](https://github.com/user-attachments/assets/55967026-0c1d-474c-8c92-8e9c783c0b8a)
