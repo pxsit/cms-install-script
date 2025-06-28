@@ -61,7 +61,9 @@ sudo -u postgres psql --username=postgres --dbname="$PG_DB" --command="ALTER DAT
 sudo -u postgres psql --username=postgres --dbname="$PG_DB" --command="ALTER SCHEMA public OWNER TO \"$PG_USER\";"
 sudo -u postgres psql --username=postgres --dbname="$PG_DB" --command="GRANT SELECT ON pg_largeobject TO \"$PG_USER\";"
 NEW_URL="database = \"postgresql+psycopg2://$ESC_USER:$ESC_PASS@localhost:5432/$ESC_DB\""
-sudo chmod 666 /usr/local/etc/cms.toml
+#sudo chmod 666 /usr/local/etc/cms.toml
+sudo chmod 640 /usr/local/etc/cms.toml
+sudo chown $CUR_USER:$CUR_USER /usr/local/etc/cms.toml
 sudo sed -i "s|^database = \".*\"|$NEW_URL|" "$CONFIG_PATH"
 sudo sed -i "s|^secret_key = \".*\"|secret_key = \"$SECRET_KEY\"|" "$CONFIG_PATH"
 $CUR_DIR/cms_venv/bin/cmsInitDB
@@ -118,7 +120,9 @@ Slice=cms.slice
 WantedBy=multi-user.target
 EOF
 
-sudo chmod 666 $CUR_DIR/resource-service.conf 
+sudo chmod 640 "$CUR_DIR/resource-service.conf"
+sudo chown $CUR_USER:$CUR_USER "$CUR_DIR/resource-service.conf"
+
 sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
 
