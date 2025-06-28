@@ -11,6 +11,8 @@ wget -O cms-install.sh https://raw.githubusercontent.com/pxsit/cms-install-scrip
 2. Follow the script instructions
 3. Access at localhost:8888 localhost:8889 localhost:8890
 
+**[Video Guide](https://youtu.be/FsDi3x_EY8A)**
+
 Installation with Website Integration via Cloudflare
 ----------------------------------------------------
 For ease of demonstration my websites name will be https://grader.cms.com, https://admin.cms.com, and https://leaderboard.cms.com
