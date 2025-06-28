@@ -34,6 +34,7 @@ fi
 #Install CMS
 [ -d "cms" ] || git clone https://github.com/cms-dev/cms.git --recursive
 cd cms
+sudo sed -i 's|default=\["C11 / gcc", "C++20 / g++", "Pascal / fpc"\])|default=\["C11 / gcc", "C++20 / g++"\])|' $CUR_DIR/cms/cms/db/contest.py
 yes | sudo python3 prerequisites.py install
 python3.12 -m venv "$CUR_DIR/cms_venv"
 source "$CUR_DIR/cms_venv/bin/activate"
