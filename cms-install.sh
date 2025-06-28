@@ -35,11 +35,11 @@ fi
 [ -d "cms" ] || git clone https://github.com/cms-dev/cms.git --recursive
 cd cms
 yes | sudo python3 prerequisites.py install
-python3 -m venv "$CUR_DIR/cms_venv"
+python3.12 -m venv "$CUR_DIR/cms_venv"
 source "$CUR_DIR/cms_venv/bin/activate"
 CONFIG_PATH="/usr/local/etc/cms.toml"
-pip install -r requirements.txt
-pip install .
+pip3.12 install -r requirements.txt
+pip3.12 install .
 SECRET_KEY=$(python3 -c 'from cmscommon import crypto; print(crypto.get_hex_random_key())')
 #Database
 read -p "Enter Database name [cmsdb]: " PG_DB
