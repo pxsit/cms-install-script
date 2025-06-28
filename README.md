@@ -6,7 +6,7 @@ Basic Installation
 ------------------
 1. Run the following command in the directory you want to install cms in
 ```bash
-curl -sL https://raw.githubusercontent.com/pxsit/cms-install-script/refs/heads/main/cms-install.sh | bash
+curl -LO https://raw.githubusercontent.com/pxsit/cms-install-script/refs/heads/main/cms-install.sh | bash
 ```
 2. Follow the script instructions
 3. Access at localhost:8888 localhost:8889 localhost:8890
@@ -22,7 +22,7 @@ If you have finished you will have something that looked like this
 
 4. Run the following command in the directory you want to install cms in
 ```bash
-curl -sL https://raw.githubusercontent.com/pxsit/cms-install-script/refs/heads/main/cms-install.sh | bash
+curl -LO https://raw.githubusercontent.com/pxsit/cms-install-script/refs/heads/main/cms-install.sh | bash
 ```
 5. Follow the scripts instructions and when prompted to link you cms to a website answer Y
 6. Enter the subdomain of each Service, mine will be grader.cms.com, admin.cms.com, and leaderboard.cms.com respectively
