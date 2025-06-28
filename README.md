@@ -18,7 +18,8 @@ For ease of demonstration my websites name will be https://grader.cms.com, https
 2. Go to DNS -> Records
 3. Add 3 type A records with the name of each records being the name you want your subdomain to be and the IPV4 address be your server's IPV4 address and with Proxied status DNS only.
 If you have finished you will have something that looked like this
-![image](https://github.com/user-attachments/assets/cec88ead-7a70-4380-a760-a011374fb24a)
+![image](https://github.com/user-attachments/assets/488c98cb-9625-4aa4-a9da-c65b63d31a64)
+
 4. Run the following command in the directory you want to install cms in
 ```bash
 curl -sL https://raw.githubusercontent.com/pxsit/cms-install-script/refs/heads/main/cms-install.sh | bash
