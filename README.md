@@ -35,4 +35,12 @@ But if more than one contest is present, you need to configure RWS by editing re
 by changing the contest id to the contest id you want to have the RWS linked to (beware, other contest will not become accessible)
 
 The contest id will be shown when editing a contest in the admin tab as shown in the image
+
 ![image](https://github.com/user-attachments/assets/55967026-0c1d-474c-8c92-8e9c783c0b8a)
+
+After confiuration, restart cms by runnning the following command
+```bash
+sudo systemctl restart cms-log
+sudo systemctl restart cms
+sudo systemctl restart cms-ranking
+```
