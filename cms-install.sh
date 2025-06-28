@@ -15,8 +15,8 @@ if [[ "$INSTALL_OPT" == "f" || "$INSTALL_OPT" == "full" ]]; then
 	    python3.12 cppreference-doc-en-html cgroup-lite libcap-dev zip \
 	    python3.12-dev libpq-dev libcups2-dev libyaml-dev nginx-full php-cli \
 	    texlive-latex-base a2ps ghc rustc mono-mcs pypy3 python3-pycryptodome python3.12-venv git
-	read -p "Do you want to install additional Pascal Units? [Y/N] (default N): " PASCAL_UNITS_INSTALL
-	PASCAL_UNITS_INSTALL=${PASCAL_UNITS_INSTALL:-N}
+	read -p "Do you want to install additional Pascal Units? [Y/N] (default Y): " PASCAL_UNITS_INSTALL
+	PASCAL_UNITS_INSTALL=${PASCAL_UNITS_INSTALL:-Y}
 	PASCAL_UNITS_INSTALL=${PASCAL_UNITS_INSTALL,,}
 	if [[ "$PASCAL_UNITS_INSTALL" == "y" || "$PASCAL_UNITS_INSTALL" == "yes" ]]; then
 	    sudo apt-get install -y fp-units-base fp-units-fcl fp-units-misc fp-units-math fp-units-rtl
@@ -39,7 +39,6 @@ CONFIG_PATH="/usr/local/etc/cms.toml"
 pip install -r requirements.txt
 pip install .
 SECRET_KEY=$(python3 -c 'from cmscommon import crypto; print(crypto.get_hex_random_key())')
-sudo apt remove python3-pycryptodome
 #Database
 read -p "Enter Database name [cmsdb]: " PG_DB
 read -p "Enter Database username [cmsuser]: " PG_USER
