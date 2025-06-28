@@ -176,7 +176,7 @@ CONF
 )
 EOF
 		sudo ln -s /etc/nginx/sites-available/cms /etc/nginx/sites-enabled/cms 
-		read -p "Do you want to add a free SSL Certificate from cerbot? [Y/N] (default Y): " CERT_OPTION
+		read -p "Do you want to add a free SSL Certificate from certbot? [Y/N] (default Y): " CERT_OPTION
 		CERT_OPTION=${CERT_OPTION:-y}
 		CERT_OPTION=${CERT_OPTION,,}
 		if [[ "$CERT_OPTION" == "y" || "$CERT_OPTION" == "yes" ]]; then
