@@ -9,9 +9,9 @@ Basic Installation
 wget -O cms-install.sh https://raw.githubusercontent.com/pxsit/cms-install-script/refs/heads/main/cms-install.sh && bash cms-install.sh && rm cms-install.sh
 ```
 2. Follow the script instructions
-3. Access at localhost:8888 localhost:8889 localhost:8890
+3. Access at https://localhost:8888 https://localhost:8889 https://localhost:8890
 
-**[Video Guide](https://youtu.be/FsDi3x_EY8A)**
+**[Old Video Guide](https://youtu.be/FsDi3x_EY8A)**
 
 Installation with Website Integration via Cloudflare
 ----------------------------------------------------
@@ -47,3 +47,7 @@ sudo systemctl restart cms-log
 sudo systemctl restart cms
 sudo systemctl restart cms-ranking
 ```
+
+Configuration
+-------------
+Configuration can be done at /home/cmsuser/cms/target/etc/cms.toml 
