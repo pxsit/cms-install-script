@@ -1,14 +1,19 @@
 #!/usr/bin/env bash
 
-#Prerequisites
+#Pre-Install
 set -e
 trap 'echo "Error on line $LINENO: $BASH_COMMAND"; exit 1' ERR
 CUR_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 CUR_USER=$(whoami)
 
+if ! ping -c1 -W2 8.8.8.8 >/dev/null 2>&1; then
+    echo "ERROR: No Internet connection. Exiting." >&2
+    exit 1
+fi
+
 #Install Packages
-read -p "Would you like a Full Install or a Minimal Install? [F/M] (default F): " INSTALL_OPT
-INSTALL_OPT=${INSTALL_OPT:-F}
+read -p "Would you like a Full Install or a Minimal Install? [F/M] (default M): " INSTALL_OPT
+INSTALL_OPT=${INSTALL_OPT:-M}
 INSTALL_OPT=${INSTALL_OPT,,}
 sudo apt-get update
 if [[ "$INSTALL_OPT" == "f" || "$INSTALL_OPT" == "full" ]]; then
@@ -34,23 +39,21 @@ fi
 
 
 # Install Isolate from upstream package repository
+sudo mkdir -p /etc/apt/keyrings
 echo 'deb [arch=amd64 signed-by=/etc/apt/keyrings/isolate.asc] http://www.ucw.cz/isolate/debian/ noble-isolate main' | sudo tee /etc/apt/sources.list.d/isolate.list > /dev/null
 sudo curl https://www.ucw.cz/isolate/debian/signing-key.asc | sudo tee /etc/apt/keyrings/isolate.asc > /dev/null
 sudo apt update && sudo apt install -y isolate
 
 #Install CMS
-sudo useradd --user-group --create-home --comment CMS cmsuser
-sudo usermod -aG cmsuser pasit
-#sudo chown -R $CUR_USER $CUR_DIR 
-#sudo chown -R cmsuser $CUR_DIR
-#sudo chown -R $CUR_USER /home/cmsuser
+if ! id cmsuser &>/dev/null; then
+  sudo useradd --user-group --create-home --comment CMS cmsuser
+fi
+sudo usermod -aG isolate cmsuser
 sudo -u cmsuser git clone https://github.com/cms-dev/cms.git /home/cmsuser/cms
-cd /home/cmsuser/cms
 sudo sed -i 's|default=\["C11 / gcc", "C++20 / g++", "Pascal / fpc"\])|default=\["C11 / gcc", "C++20 / g++"\])|' /home/cmsuser/cms/cms/db/contest.py
-sudo -u cmsuser /home/cmsuser/cms/install.py --dir=target cms
-source "/home/cmsuser/cms/target/bin/activate"
-CONFIG_PATH="$/home/cmsuser/cms/target/etc/cms.toml"
-SECRET_KEY=$(python3 -c 'from cmscommon import crypto; print(crypto.get_hex_random_key())')
+sudo -u cmsuser bash -c 'cd /home/cmsuser/cms && /home/cmsuser/cms/install.py --dir=target cms'
+CONFIG_PATH="/home/cmsuser/cms/target/etc/cms.toml"
+SECRET_KEY=$(sudo -u cmsuser /home/cmsuser/cms/target/bin/python3 -c 'from cmscommon import crypto; print(crypto.get_hex_random_key())')
 
 #Database
 read -p "Enter Database name [cmsdb]: " PG_DB
@@ -74,6 +77,8 @@ sudo -u postgres psql --username=postgres --dbname="$PG_DB" --command="GRANT SEL
 NEW_URL="database = \"postgresql+psycopg2://$ESC_USER:$ESC_PASS@localhost:5432/$ESC_DB\""
 sudo sed -i "s|^database = \".*\"|$NEW_URL|" "$CONFIG_PATH"
 sudo sed -i "s|^secret_key = \".*\"|secret_key = \"$SECRET_KEY\"|" "$CONFIG_PATH"
+sudo -u cmsuser bash -c '/home/cmsuser/cms/target/bin/cmsInitDB'
+
 #Docs
 sudo mkdir /usr/share/cms
 sudo mkdir /usr/share/cms/docs
@@ -91,7 +96,7 @@ Requires=postgresql.service
 After=postgresql.service
 [Service]
 Type=simple
-ExecStart=$CUR_DIR/cms/bin/cmsLogService
+ExecStart=/home/cmsuser/cms/target/bin/cmsLogService
 User=cmsuser
 [Install]
 WantedBy=multi-user.target
@@ -105,7 +110,7 @@ After=cms-log.service postgresql.service
 [Service]
 Type=simple
 EnvironmentFile=$CUR_DIR/resource-service.conf
-ExecStart=$CUR_DIR/cms/bin/cmsResourceService -a \$CONTEST_ID 0
+ExecStart=/home/cmsuser/cms/target/bin/cmsResourceService -a \$CONTEST_ID 0
 User=cmsuser
 Slice=cms.slice
 [Install]
@@ -119,14 +124,15 @@ Requires=cms-log.service postgresql.service
 After=cms-log.service postgresql.service
 [Service]
 Type=simple
-ExecStart=$CUR_DIR/cms/bin/cmsRankingWebServer
+ExecStart=/home/cmsuser/cms/target/bin/cmsRankingWebServer
 User=cmsuser
 Slice=cms.slice
 [Install]
 WantedBy=multi-user.target
 EOF
 
-sudo chown cmsuser "$CUR_DIR/resource-service.conf"
+sudo chown cmsuser $CUR_DIR/resource-service.conf
+sudo chgrp cmsuser $CUR_DIR/resource-service.conf
 
 sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
@@ -188,6 +194,8 @@ EOF
 		CERT_OPTION=${CERT_OPTION:-y}
 		CERT_OPTION=${CERT_OPTION,,}
 		if [[ "$CERT_OPTION" == "y" || "$CERT_OPTION" == "yes" ]]; then
+			echo "Please wait..."
+			sleep 5
 			sudo apt-get install -y certbot python3-certbot-nginx
 			sudo certbot --nginx
 		fi
@@ -195,4 +203,4 @@ EOF
 fi
 read -p "Please create an admin user (default admin): " ADMIN_USER
 ADMIN_USER=${ADMIN_USER:-admin}
-$/home/cmsuser/cms/target/bin/cmsAddAdmin $ADMIN_USER
+sudo -u cmsuser bash -c "/home/cmsuser/cms/target/bin/cmsAddAdmin $ADMIN_USER"
