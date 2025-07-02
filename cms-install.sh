@@ -40,22 +40,16 @@ sudo apt update && sudo apt install -y isolate
 
 #Install CMS
 sudo useradd --user-group --create-home --comment CMS cmsuser
-sudo usermod -a -G isolate cmsuser
-sudo usermod -a -G sudo cmsuser
 sudo usermod -aG cmsuser pasit
-sudo chmod 640 $CUR_DIR
-sudo chown $CUR_USER:cmsuser $CUR_DIR
-sudo chmod 640 /home/cmsuser
-sudo chown $CUR_USER:cmsuser /home/cmsuser
 #sudo chown -R $CUR_USER $CUR_DIR 
 #sudo chown -R cmsuser $CUR_DIR
 #sudo chown -R $CUR_USER /home/cmsuser
 sudo -u cmsuser git clone https://github.com/cms-dev/cms.git /home/cmsuser/cms
 cd /home/cmsuser/cms
 sudo sed -i 's|default=\["C11 / gcc", "C++20 / g++", "Pascal / fpc"\])|default=\["C11 / gcc", "C++20 / g++"\])|' /home/cmsuser/cms/cms/db/contest.py
-sudo -u cmsuser /home/cmsuser/cms/install.py --dir=$CUR_DIR/cms cms
-source "$CUR_DIR/cms/bin/activate"
-CONFIG_PATH="$CUR_DIR/cms/etc/cms.toml"
+sudo -u cmsuser /home/cmsuser/cms/install.py --dir=target cms
+source "/home/cmsuser/cms/target/bin/activate"
+CONFIG_PATH="$/home/cmsuser/cms/target/etc/cms.toml"
 SECRET_KEY=$(python3 -c 'from cmscommon import crypto; print(crypto.get_hex_random_key())')
 
 #Database
@@ -80,39 +74,6 @@ sudo -u postgres psql --username=postgres --dbname="$PG_DB" --command="GRANT SEL
 NEW_URL="database = \"postgresql+psycopg2://$ESC_USER:$ESC_PASS@localhost:5432/$ESC_DB\""
 sudo sed -i "s|^database = \".*\"|$NEW_URL|" "$CONFIG_PATH"
 sudo sed -i "s|^secret_key = \".*\"|secret_key = \"$SECRET_KEY\"|" "$CONFIG_PATH"
-$CUR_DIR/cms/bin/cmsInitDB
-FOLDERS=(
-  AdminWebServer-0
-  Checker-0
-  cms
-  ContestWebServer-0
-  EvaluationService-0
-  LogService-0
-  PrintingService-0
-  ProxyService-0
-  ResourceService-0
-  ScoringService-0
-  Worker-0
-  Worker-1
-  Worker-2
-  Worker-3
-  Worker-4
-  Worker-5
-  Worker-6
-  Worker-7
-  Worker-8
-  Worker-9
-  Worker-10
-  Worker-11
-  Worker-12
-  Worker-13
-  Worker-14
-  Worker-15
-)
-for folder in "${FOLDERS[@]}"; do
-  sudo mkdir -p "$CUR_DIR/cms/log/$folder"
-done
-
 #Docs
 sudo mkdir /usr/share/cms
 sudo mkdir /usr/share/cms/docs
@@ -234,4 +195,4 @@ EOF
 fi
 read -p "Please create an admin user (default admin): " ADMIN_USER
 ADMIN_USER=${ADMIN_USER:-admin}
-$CUR_DIR/cms/bin/cmsAddAdmin $ADMIN_USER
+$/home/cmsuser/cms/target/bin/cmsAddAdmin $ADMIN_USER
