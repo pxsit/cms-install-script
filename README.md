@@ -10,6 +10,7 @@ wget -O cms-install.sh https://raw.githubusercontent.com/pxsit/cms-install-scrip
 ```
 2. Follow the script instructions
 3. Access at https://localhost:8888 https://localhost:8889 https://localhost:8890
+4. To use scripts like cmsAddUser please activate venv at /usr/cmsuser/cms/target/bin/activate
 
 **[Old Video Guide](https://youtu.be/FsDi3x_EY8A)**
 
