@@ -205,6 +205,6 @@ read -p "Please create an admin user (default admin): " ADMIN_USER
 ADMIN_USER=${ADMIN_USER:-admin}
 sudo -u cmsuser bash -c "/home/cmsuser/cms/target/bin/cmsAddAdmin $ADMIN_USER"
 
-echo "Contest Web Server started at https://localhost:8888"
-echo "Admin Web Server started at https://localhost:8889"
-echo "Ranking Web Server started at https://localhost:8890"
+echo "Contest Web Server started at http://localhost:8888"
+echo "Admin Web Server started at http://localhost:8889"
+echo "Ranking Web Server started at http://localhost:8890"
