@@ -21,13 +21,8 @@ if [[ "$INSTALL_OPT" == "f" || "$INSTALL_OPT" == "full" ]]; then
 	    build-essential openjdk-11-jdk-headless fp-compiler postgresql postgresql-client \
 	    python3.12 cppreference-doc-en-html libffi-dev zip \
 	    python3.12-dev libpq-dev libcups2-dev libyaml-dev php-cli \
-	    texlive-latex-base a2ps ghc rustc mono-mcs pypy3 python3-pycryptodome python3-venv git python3-pip
-	read -p "Do you want to install additional Free Pascal Units? [Y/N] (default Y): " PASCAL_UNITS_INSTALL
-	PASCAL_UNITS_INSTALL=${PASCAL_UNITS_INSTALL:-Y}
-	PASCAL_UNITS_INSTALL=${PASCAL_UNITS_INSTALL,,}
-	if [[ "$PASCAL_UNITS_INSTALL" == "y" || "$PASCAL_UNITS_INSTALL" == "yes" ]]; then
-	    sudo apt-get install -y fp-units-base fp-units-fcl fp-units-misc fp-units-math fp-units-rtl
-	fi
+	    texlive-latex-base a2ps ghc rustc mono-mcs pypy3 python3-pycryptodome python3-venv \ 
+            git python3-pip fp-units-base fp-units-fcl fp-units-misc fp-units-math fp-units-rtl
 else
 sudo apt-get install -y \
     build-essential postgresql postgresql-client \
@@ -49,6 +44,7 @@ if ! id cmsuser &>/dev/null; then
   sudo useradd --user-group --create-home --comment CMS cmsuser
 fi
 sudo usermod -aG isolate cmsuser
+sudo usermod -aG sudo cmsuser
 sudo -u cmsuser git clone https://github.com/cms-dev/cms.git /home/cmsuser/cms
 sudo sed -i 's|default=\["C11 / gcc", "C++20 / g++", "Pascal / fpc"\])|default=\["C11 / gcc", "C++20 / g++"\])|' /home/cmsuser/cms/cms/db/contest.py
 sudo -u cmsuser bash -c 'cd /home/cmsuser/cms && /home/cmsuser/cms/install.py --dir=target cms'
@@ -56,7 +52,7 @@ CONFIG_PATH="/home/cmsuser/cms/target/etc/cms.toml"
 SECRET_KEY=$(sudo -u cmsuser /home/cmsuser/cms/target/bin/python3 -c 'from cmscommon import crypto; print(crypto.get_hex_random_key())')
 
 #Database
-read -p "Do you want to initialize the database [Y/N] (default : Y) : " DB_OPTION
+read -p "Do you want to create a new database [Y/N] (default : Y) : " DB_OPTION
 DB_OPTION=${DB_OPTION:-Y}
 DB_OPTION=${DB_OPTION,,}
 if [[ "$DB_OPTION" == "y" || "$DB_OPTION" == "Y" ]]; then
@@ -83,7 +79,7 @@ if [[ "$DB_OPTION" == "y" || "$DB_OPTION" == "Y" ]]; then
 	sudo sed -i "s|^secret_key = \".*\"|secret_key = \"$SECRET_KEY\"|" "$CONFIG_PATH"
 	sudo -u cmsuser bash -c '/home/cmsuser/cms/target/bin/cmsInitDB'
 fi
-sudo usermod -aG sudo cmsuser
+
 #Docs
 sudo mkdir /usr/share/cms
 sudo mkdir /usr/share/cms/docs
