@@ -56,7 +56,7 @@ CONFIG_PATH="/home/cmsuser/cms/target/etc/cms.toml"
 SECRET_KEY=$(sudo -u cmsuser /home/cmsuser/cms/target/bin/python3 -c 'from cmscommon import crypto; print(crypto.get_hex_random_key())')
 
 #Database
-read -p "Do you want to initialize the database [Y]: " DB_OPTION
+read -p "Do you want to initialize the database [Y/N] (default : Y) : " DB_OPTION
 DB_OPTION=${DB_OPTION:-Y}
 DB_OPTION=${DB_OPTION,,}
 if [[ "$DB_OPTION" == "y" || "$DB_OPTION" == "Y" ]]; then
