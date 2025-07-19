@@ -56,29 +56,34 @@ CONFIG_PATH="/home/cmsuser/cms/target/etc/cms.toml"
 SECRET_KEY=$(sudo -u cmsuser /home/cmsuser/cms/target/bin/python3 -c 'from cmscommon import crypto; print(crypto.get_hex_random_key())')
 
 #Database
-read -p "Enter Database name [cmsdb]: " PG_DB
-PG_DB=${PG_DB:-cmsdb}
-read -p "Enter Database username [cmsuser]: " PG_USER
-PG_USER=${PG_USER:-cmsuser}
-read -s -p "Enter Database password (Blank for Random): " PG_PASS
-echo
-if [ -z "$PG_PASS" ]; then
-    PG_PASS=$(< /dev/urandom tr -dc 'A-Za-z0-9!@#$%^&*()_+=' | head -c32)
+read -p "Do you want to initialize the database [Y]: " DB_OPTION
+DB_OPTION=${DB_OPTION:-Y}
+DB_OPTION=${DB_OPTION,,}
+if [[ "$DB_OPTION" == "y" || "$DB_OPTION" == "Y" ]]; then
+	read -p "Enter Database name [cmsdb]: " PG_DB
+	PG_DB=${PG_DB:-cmsdb}
+	read -p "Enter Database username [cmsuser]: " PG_USER
+	PG_USER=${PG_USER:-cmsuser}
+	read -s -p "Enter Database password (Blank for Random): " PG_PASS
+	echo
+	if [ -z "$PG_PASS" ]; then
+	    PG_PASS=$(< /dev/urandom tr -dc 'A-Za-z0-9!@#$%^&*()_+=' | head -c32)
+	fi
+	ESC_USER=$(printf '%q' "$PG_USER")
+	ESC_PASS=$(env PG_PASS="$PG_PASS" python3 -c "import urllib.parse, os; print(urllib.parse.quote(os.environ['PG_PASS']))")
+	ESC_DB=$(printf '%q' "$PG_DB")
+	sudo -u postgres psql --username=postgres --tuples-only --no-align --command="SELECT 1 FROM pg_roles WHERE rolname='$PG_USER'" | grep -q 1 || \
+	sudo -u postgres psql --username=postgres --command="CREATE ROLE \"$PG_USER\" WITH LOGIN PASSWORD '$PG_PASS';"
+	sudo -u postgres createdb --username=postgres "$PG_DB"
+	sudo -u postgres psql --username=postgres --dbname="$PG_DB" --command="ALTER DATABASE \"$PG_DB\" OWNER TO \"$PG_USER\";"
+	sudo -u postgres psql --username=postgres --dbname="$PG_DB" --command="ALTER SCHEMA public OWNER TO \"$PG_USER\";"
+	sudo -u postgres psql --username=postgres --dbname="$PG_DB" --command="GRANT SELECT ON pg_largeobject TO \"$PG_USER\";"
+	NEW_URL="database = \"postgresql+psycopg2://$ESC_USER:$ESC_PASS@localhost:5432/$ESC_DB\""
+	sudo sed -i "s|^database = \".*\"|$NEW_URL|" "$CONFIG_PATH"
+	sudo sed -i "s|^secret_key = \".*\"|secret_key = \"$SECRET_KEY\"|" "$CONFIG_PATH"
+	sudo -u cmsuser bash -c '/home/cmsuser/cms/target/bin/cmsInitDB'
 fi
-ESC_USER=$(printf '%q' "$PG_USER")
-ESC_PASS=$(env PG_PASS="$PG_PASS" python3 -c "import urllib.parse, os; print(urllib.parse.quote(os.environ['PG_PASS']))")
-ESC_DB=$(printf '%q' "$PG_DB")
-sudo -u postgres psql --username=postgres --tuples-only --no-align --command="SELECT 1 FROM pg_roles WHERE rolname='$PG_USER'" | grep -q 1 || \
-sudo -u postgres psql --username=postgres --command="CREATE ROLE \"$PG_USER\" WITH LOGIN PASSWORD '$PG_PASS';"
-sudo -u postgres createdb --username=postgres "$PG_DB"
-sudo -u postgres psql --username=postgres --dbname="$PG_DB" --command="ALTER DATABASE \"$PG_DB\" OWNER TO \"$PG_USER\";"
-sudo -u postgres psql --username=postgres --dbname="$PG_DB" --command="ALTER SCHEMA public OWNER TO \"$PG_USER\";"
-sudo -u postgres psql --username=postgres --dbname="$PG_DB" --command="GRANT SELECT ON pg_largeobject TO \"$PG_USER\";"
-NEW_URL="database = \"postgresql+psycopg2://$ESC_USER:$ESC_PASS@localhost:5432/$ESC_DB\""
-sudo sed -i "s|^database = \".*\"|$NEW_URL|" "$CONFIG_PATH"
-sudo sed -i "s|^secret_key = \".*\"|secret_key = \"$SECRET_KEY\"|" "$CONFIG_PATH"
-sudo -u cmsuser bash -c '/home/cmsuser/cms/target/bin/cmsInitDB'
-
+sudo usermod -aG sudo cmsuser
 #Docs
 sudo mkdir /usr/share/cms
 sudo mkdir /usr/share/cms/docs
