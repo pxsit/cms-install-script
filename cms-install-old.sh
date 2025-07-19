@@ -16,13 +16,8 @@ if [[ "$INSTALL_OPT" == "f" || "$INSTALL_OPT" == "full" ]]; then
 	    build-essential openjdk-11-jdk-headless fp-compiler postgresql postgresql-client \
 	    python3.12 cppreference-doc-en-html cgroup-lite libcap-dev zip \
 	    python3.12-dev libpq-dev libcups2-dev libyaml-dev php-cli \
-	    texlive-latex-base a2ps ghc rustc mono-mcs pypy3 python3-pycryptodome python3.12-venv git
-	read -p "Do you want to install additional Free Pascal Units? [Y/N] (default Y): " PASCAL_UNITS_INSTALL
-	PASCAL_UNITS_INSTALL=${PASCAL_UNITS_INSTALL:-Y}
-	PASCAL_UNITS_INSTALL=${PASCAL_UNITS_INSTALL,,}
-	if [[ "$PASCAL_UNITS_INSTALL" == "y" || "$PASCAL_UNITS_INSTALL" == "yes" ]]; then
-	    sudo apt-get install -y fp-units-base fp-units-fcl fp-units-misc fp-units-math fp-units-rtl
-	fi
+	    texlive-latex-base a2ps ghc rustc mono-mcs pypy3 python3-pycryptodome python3.12-venv git \
+	    fp-units-base fp-units-fcl fp-units-misc fp-units-math fp-units-rtl
 else
 sudo apt-get install -y \
     build-essential postgresql postgresql-client \
@@ -43,32 +38,37 @@ pip3.12 install -r requirements.txt
 pip3.12 install .
 SECRET_KEY=$(python3 -c 'from cmscommon import crypto; print(crypto.get_hex_random_key())')
 #Database
-read -p "Enter Database name [cmsdb]: " PG_DB
-PG_DB=${PG_DB:-cmsdb}
-read -p "Enter Database username [cmsuser]: " PG_USER
-PG_USER=${PG_USER:-cmsuser}
-read -s -p "Enter Database password (Blank for Random): " PG_PASS
-echo
-if [ -z "$PG_PASS" ]; then
-    PG_PASS=$(< /dev/urandom tr -dc 'A-Za-z0-9!@#$%^&*()_+=' | head -c32)
-fi
-ESC_USER=$(printf '%q' "$PG_USER")
-ESC_PASS=$(env PG_PASS="$PG_PASS" python3 -c "import urllib.parse, os; print(urllib.parse.quote(os.environ['PG_PASS']))")
-ESC_DB=$(printf '%q' "$PG_DB")
-sudo -u postgres psql --username=postgres --tuples-only --no-align --command="SELECT 1 FROM pg_roles WHERE rolname='$PG_USER'" | grep -q 1 || \
-sudo -u postgres psql --username=postgres --command="CREATE ROLE \"$PG_USER\" WITH LOGIN PASSWORD '$PG_PASS';"
-sudo -u postgres createdb --username=postgres "$PG_DB"
-sudo -u postgres psql --username=postgres --dbname="$PG_DB" --command="ALTER DATABASE \"$PG_DB\" OWNER TO \"$PG_USER\";"
-sudo -u postgres psql --username=postgres --dbname="$PG_DB" --command="ALTER SCHEMA public OWNER TO \"$PG_USER\";"
-sudo -u postgres psql --username=postgres --dbname="$PG_DB" --command="GRANT SELECT ON pg_largeobject TO \"$PG_USER\";"
-NEW_URL="database = \"postgresql+psycopg2://$ESC_USER:$ESC_PASS@localhost:5432/$ESC_DB\""
-sudo chmod 640 /usr/local/etc/cms.toml
-sudo chmod 640 /usr/local/etc/cms_ranking.toml
-sudo chown $CUR_USER:$CUR_USER /usr/local/etc/cms.toml
-sudo chown $CUR_USER:$CUR_USER /usr/local/etc/cms_ranking.toml
-sudo sed -i "s|^database = \".*\"|$NEW_URL|" "$CONFIG_PATH"
-sudo sed -i "s|^secret_key = \".*\"|secret_key = \"$SECRET_KEY\"|" "$CONFIG_PATH"
-$CUR_DIR/cms_venv/bin/cmsInitDB
+read -p "Do you want to create a new database [Y/N] (default : Y) : " DB_OPTION
+DB_OPTION=${DB_OPTION:-Y}
+DB_OPTION=${DB_OPTION,,}
+if [[ "$DB_OPTION" == "y" || "$DB_OPTION" == "Y" ]]; then
+	read -p "Enter Database name [cmsdb]: " PG_DB
+	PG_DB=${PG_DB:-cmsdb}
+	read -p "Enter Database username [cmsuser]: " PG_USER
+	PG_USER=${PG_USER:-cmsuser}
+	read -s -p "Enter Database password (Blank for Random): " PG_PASS
+	echo
+	if [ -z "$PG_PASS" ]; then
+	    PG_PASS=$(< /dev/urandom tr -dc 'A-Za-z0-9!@#$%^&*()_+=' | head -c32)
+	fi
+	ESC_USER=$(printf '%q' "$PG_USER")
+	ESC_PASS=$(env PG_PASS="$PG_PASS" python3 -c "import urllib.parse, os; print(urllib.parse.quote(os.environ['PG_PASS']))")
+	ESC_DB=$(printf '%q' "$PG_DB")
+	sudo -u postgres psql --username=postgres --tuples-only --no-align --command="SELECT 1 FROM pg_roles WHERE rolname='$PG_USER'" | grep -q 1 || \
+	sudo -u postgres psql --username=postgres --command="CREATE ROLE \"$PG_USER\" WITH LOGIN PASSWORD '$PG_PASS';"
+	sudo -u postgres createdb --username=postgres "$PG_DB"
+	sudo -u postgres psql --username=postgres --dbname="$PG_DB" --command="ALTER DATABASE \"$PG_DB\" OWNER TO \"$PG_USER\";"
+	sudo -u postgres psql --username=postgres --dbname="$PG_DB" --command="ALTER SCHEMA public OWNER TO \"$PG_USER\";"
+	sudo -u postgres psql --username=postgres --dbname="$PG_DB" --command="GRANT SELECT ON pg_largeobject TO \"$PG_USER\";"
+	NEW_URL="database = \"postgresql+psycopg2://$ESC_USER:$ESC_PASS@localhost:5432/$ESC_DB\""
+	sudo chmod 640 /usr/local/etc/cms.toml
+	sudo chmod 640 /usr/local/etc/cms_ranking.toml
+	sudo chown $CUR_USER:$CUR_USER /usr/local/etc/cms.toml
+	sudo chown $CUR_USER:$CUR_USER /usr/local/etc/cms_ranking.toml
+	sudo sed -i "s|^database = \".*\"|$NEW_URL|" "$CONFIG_PATH"
+	sudo sed -i "s|^secret_key = \".*\"|secret_key = \"$SECRET_KEY\"|" "$CONFIG_PATH"
+	$CUR_DIR/cms_venv/bin/cmsInitDB
+ fi
 
 #Docs
 sudo mkdir /usr/share/cms
