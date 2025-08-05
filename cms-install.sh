@@ -75,7 +75,7 @@ if [[ "$DB_OPTION" == "y" || "$DB_OPTION" == "Y" ]]; then
 	sudo -u postgres psql --username=postgres --dbname="$PG_DB" --command="ALTER SCHEMA public OWNER TO \"$PG_USER\";"
 	sudo -u postgres psql --username=postgres --dbname="$PG_DB" --command="GRANT SELECT ON pg_largeobject TO \"$PG_USER\";"
 	NEW_URL="database = \"postgresql+psycopg2://$ESC_USER:$ESC_PASS@localhost:5432/$ESC_DB\""
-	sudo sed -i "s|^database = \".*\"|$NEW_URL|" "$CONFIG_PATH"
+	sudo sed -i "s|^url = \".*\"|$NEW_URL|" "$CONFIG_PATH"
 	sudo sed -i "s|^secret_key = \".*\"|secret_key = \"$SECRET_KEY\"|" "$CONFIG_PATH"
 	sudo -u cmsuser bash -c '/home/cmsuser/cms/target/bin/cmsInitDB'
 fi
