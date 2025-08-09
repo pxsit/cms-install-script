@@ -15,13 +15,11 @@ fi
 read -p "Would you like a Full Install or a Minimal Install? [F/M] (default M): " INSTALL_OPT
 INSTALL_OPT=${INSTALL_OPT:-M}
 INSTALL_OPT=${INSTALL_OPT,,}
-sudo mkdir -p /etc/apt/keyrings
-echo 'deb [arch=amd64 signed-by=/etc/apt/keyrings/isolate.asc] http://www.ucw.cz/isolate/debian/ noble-isolate main' | sudo tee /etc/apt/sources.list.d/isolate.list > /dev/null
 sudo apt-get update
 if [[ "$INSTALL_OPT" == "f" || "$INSTALL_OPT" == "full" ]]; then
 	sudo apt-get install -y \
 	    build-essential openjdk-11-jdk-headless fp-compiler postgresql postgresql-client \
-	    python3.12 cppreference-doc-en-html libffi-dev zip isolate \
+	    python3.12 cppreference-doc-en-html libffi-dev zip \
 	    python3.12-dev libpq-dev libcups2-dev libyaml-dev php-cli \
 	    texlive-latex-base a2ps ghc rustc mono-mcs pypy3 python3-pycryptodome python3-venv \ 
         git python3-pip fp-units-base fp-units-fcl fp-units-misc fp-units-math fp-units-rtl
@@ -31,9 +29,12 @@ sudo apt-get install -y \
     python3.12 libffi-dev zip \
     python3.12-dev libpq-dev libcups2-dev libyaml-dev \
     python3-pycryptodome python3-venv git cppreference-doc-en-html \
-    curl python3-pip isolate
+    curl python3-pip
 fi
-
+sudo mkdir -p /etc/apt/keyrings
+echo 'deb [arch=amd64 signed-by=/etc/apt/keyrings/isolate.asc] http://www.ucw.cz/isolate/debian/ noble-isolate main' | sudo tee /etc/apt/sources.list.d/isolate.list > /dev/null
+sudo apt-get update
+sudo apt-get install -y isolate
 #Install CMS
 if ! id cmsuser &>/dev/null; then
   sudo useradd --user-group --create-home --comment CMS cmsuser
