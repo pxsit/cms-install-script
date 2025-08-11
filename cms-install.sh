@@ -32,7 +32,8 @@ sudo apt-get install -y \
     curl python3-pip
 fi
 sudo mkdir -p /etc/apt/keyrings
-echo 'deb [arch=amd64 signed-by=/etc/apt/keyrings/isolate.asc] http://www.ucw.cz/isolate/debian/ noble-isolate main' | sudo tee /etc/apt/sources.list.d/isolate.list > /dev/null
+echo 'deb [arch=amd64 signed-by=/etc/apt/keyrings/isolate.asc] http://www.ucw.cz/isolate/debian/ noble-isolate main' | sudo tee /etc/apt/sources.list.d/isolate.list
+sudo curl https://www.ucw.cz/isolate/debian/signing-key.asc -o /etc/apt/keyrings/isolate.asc
 sudo apt-get update
 sudo apt-get install -y isolate
 #Install CMS
