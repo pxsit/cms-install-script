@@ -20,14 +20,14 @@ if [[ "$INSTALL_OPT" == "f" || "$INSTALL_OPT" == "full" ]]; then
 	sudo apt-get install -y \
 	    build-essential openjdk-11-jdk-headless fp-compiler postgresql postgresql-client \
 	    python3.12 cppreference-doc-en-html libffi-dev zip \
-	    python3.12-dev libpq-dev libcups2-dev libyaml-dev php-cli \
-	    texlive-latex-base a2ps ghc rustc mono-mcs pypy3 python3-pycryptodome python3-venv \ 
+	    python3.12-dev libpq-dev libyaml-dev php-cli \
+	    ghc rustc mono-mcs pypy3 python3-pycryptodome python3-venv \ 
         git python3-pip fp-units-base fp-units-fcl fp-units-misc fp-units-math fp-units-rtl
 else
 sudo apt-get install -y \
     build-essential postgresql postgresql-client \
     python3.12 libffi-dev zip \
-    python3.12-dev libpq-dev libcups2-dev libyaml-dev \
+    python3.12-dev libpq-dev libyaml-dev \
     python3-pycryptodome python3-venv git cppreference-doc-en-html \
     curl python3-pip
 fi
