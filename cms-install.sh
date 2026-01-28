@@ -80,13 +80,19 @@ else
 	PG_DB=${PG_DB:-cmsdb}
 	read -p "Enter Database username [cmsuser]: " PG_USER
 	PG_USER=${PG_USER:-cmsuser}
-	read -s -p "Enter Database password (Blank for Random): " PG_PASS
+	read -s -p "Enter Database password: " PG_PASS
 	ESC_USER=$(printf '%q' "$PG_USER")
 	ESC_PASS=$(env PG_PASS="$PG_PASS" python3 -c "import urllib.parse, os; print(urllib.parse.quote(os.environ['PG_PASS']))")
 	ESC_DB=$(printf '%q' "$PG_DB")
 	NEW_URL="url = \"postgresql+psycopg2://$ESC_USER:$ESC_PASS@localhost:5432/$ESC_DB\""
 	sudo sed -i "s|^url = \".*\"|$NEW_URL|" "$CONFIG_PATH"
 	sudo sed -i "s|^secret_key = \".*\"|secret_key = \"$SECRET_KEY\"|" "$CONFIG_PATH"
+	read -p "Would you like to initialize the database? [Y/N] (default : N) : " INIT_DB_OPTION
+	INIT_DB_OPTION=${INIT_DB_OPTION:-N}
+	INIT_DB_OPTION=${INIT_DB_OPTION,,}
+	if [[ "$INIT_DB_OPTION" == "Y" || "$INIT_DB_OPTION" == "y" ]]; then
+		sudo -u cmsuser bash -c '/home/cmsuser/cms/target/bin/cmsInitDB'
+	fi
 fi
 
 #Docs
