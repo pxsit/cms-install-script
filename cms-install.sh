@@ -90,9 +90,18 @@ else
 fi
 
 #Docs
-sudo mkdir /usr/share/cms
-sudo mkdir /usr/share/cms/docs
+if [ -d "/usr/share/cms" ]; then
+else
+	sudo mkdir /usr/share/cms
+fi
+if [ -d "/usr/share/cms/docs" ]; then
+else
+	sudo mkdir /usr/share/cms/docs
+fi
+if [ -L "/usr/share/cms/docs/cpp" ]; then
+else
 sudo ln -s /usr/share/cppreference/doc/html/en/ /usr/share/cms/docs/cpp
+fi
 
 #Create CMS Services
 sudo tee "$CUR_DIR/resource-service.conf" > /dev/null <<EOF
