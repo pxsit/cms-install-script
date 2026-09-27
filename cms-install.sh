@@ -386,30 +386,23 @@ OUTPUT_FILE="enter_cmsuser.sh"
 cat << 'EOF' > "$OUTPUT_FILE"
 #!/bin/bash
 
-# Default target path if no argument is passed
-TARGET_ENV="${1:-cms/target}"
+# Target activate relative to cmsuser home or absolute path
+TARGET_INPUT="${1:-cms/target/bin/activate}"
 
-# Verify that an argument or default exists
-if [ -z "$TARGET_ENV" ]; then
-    echo "Usage: $0 [path/to/virtualenv]"
-    exit 1
+# If user passed just the directory (e.g. cms/target), append /bin/activate
+if [[ "$TARGET_INPUT" != *"/bin/activate" && "$TARGET_INPUT" != *"activate" ]]; then
+    TARGET_INPUT="${TARGET_INPUT%/}/bin/activate"
 fi
 
-# Run bash as cmsuser interactively, sourcing the target activate script
-sudo -u cmsuser -i bash --rcfile <(echo "
-    if [ -f ~/.bashrc ]; then
-        source ~/.bashrc
-    fi
-    if [ -f \"$TARGET_ENV/bin/activate\" ]; then
-        source \"$TARGET_ENV/bin/activate\"
-        echo \"Activated environment: $TARGET_ENV\"
-    elif [ -f \"$TARGET_ENV\" ]; then
-        source \"$TARGET_ENV\"
-        echo \"Activated environment: $TARGET_ENV\"
+# Switch to cmsuser login environment and start bash with the environment sourced
+sudo su cmsuser -c "bash --init-file <(echo '
+    [ -f ~/.bashrc ] && source ~/.bashrc
+    if [ -f \"$TARGET_INPUT\" ]; then
+        source \"$TARGET_INPUT\"
     else
-        echo \"Error: Could not find activate script at: $TARGET_ENV\"
+        echo \"Activate path not found: $TARGET_INPUT\"
     fi
-")
+')"
 EOF
 
 chmod +x "$OUTPUT_FILE"
