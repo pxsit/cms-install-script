@@ -381,7 +381,38 @@ if [[ "$CREATE_ADMIN" == y || "$CREATE_ADMIN" == yes ]]; then
         [[ "$ADMIN_USER" =~ ^[A-Za-z0-9_.-]+$ ]] || { echo "ERROR: Invalid admin username." >&2; exit 1; }
         sudo -u cmsuser /home/cmsuser/cms/target/bin/cmsAddAdmin "$ADMIN_USER"
 fi
+OUTPUT_FILE="enter_cmsuser.sh"
 
+cat << 'EOF' > "$OUTPUT_FILE"
+#!/bin/bash
+
+# Default target path if no argument is passed
+TARGET_ENV="${1:-cms/target}"
+
+# Verify that an argument or default exists
+if [ -z "$TARGET_ENV" ]; then
+    echo "Usage: $0 [path/to/virtualenv]"
+    exit 1
+fi
+
+# Run bash as cmsuser interactively, sourcing the target activate script
+sudo -u cmsuser -i bash --rcfile <(echo "
+    if [ -f ~/.bashrc ]; then
+        source ~/.bashrc
+    fi
+    if [ -f \"$TARGET_ENV/bin/activate\" ]; then
+        source \"$TARGET_ENV/bin/activate\"
+        echo \"Activated environment: $TARGET_ENV\"
+    elif [ -f \"$TARGET_ENV\" ]; then
+        source \"$TARGET_ENV\"
+        echo \"Activated environment: $TARGET_ENV\"
+    else
+        echo \"Error: Could not find activate script at: $TARGET_ENV\"
+    fi
+")
+EOF
+
+chmod +x "$OUTPUT_FILE"
 echo "Contest Web Server started at http://localhost:8888"
 echo "Admin Web Server started at http://localhost:8889"
 echo "Ranking Web Server started at http://localhost:8890"
