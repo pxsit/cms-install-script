@@ -381,31 +381,7 @@ if [[ "$CREATE_ADMIN" == y || "$CREATE_ADMIN" == yes ]]; then
         [[ "$ADMIN_USER" =~ ^[A-Za-z0-9_.-]+$ ]] || { echo "ERROR: Invalid admin username." >&2; exit 1; }
         sudo -u cmsuser /home/cmsuser/cms/target/bin/cmsAddAdmin "$ADMIN_USER"
 fi
-OUTPUT_FILE="enter_cmsuser.sh"
 
-cat << 'EOF' > "$OUTPUT_FILE"
-#!/bin/bash
-
-# Target activate relative to cmsuser home or absolute path
-TARGET_INPUT="${1:-cms/target/bin/activate}"
-
-# If user passed just the directory (e.g. cms/target), append /bin/activate
-if [[ "$TARGET_INPUT" != *"/bin/activate" && "$TARGET_INPUT" != *"activate" ]]; then
-    TARGET_INPUT="${TARGET_INPUT%/}/bin/activate"
-fi
-
-# Switch to cmsuser login environment and start bash with the environment sourced
-sudo su cmsuser -c "bash --init-file <(echo '
-    [ -f ~/.bashrc ] && source ~/.bashrc
-    if [ -f \"$TARGET_INPUT\" ]; then
-        source \"$TARGET_INPUT\"
-    else
-        echo \"Activate path not found: $TARGET_INPUT\"
-    fi
-')"
-EOF
-
-chmod +x "$OUTPUT_FILE"
 echo "Contest Web Server started at http://localhost:8888"
 echo "Admin Web Server started at http://localhost:8889"
 echo "Ranking Web Server started at http://localhost:8890"
