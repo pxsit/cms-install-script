@@ -2,13 +2,45 @@
 
 #Pre-Install
 set -e
+set -o pipefail
 trap 'echo "Error on line $LINENO: $BASH_COMMAND"; exit 1' ERR
 CUR_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 CUR_USER=$(whoami)
 CMS_PATH=/home/cmsuser/cms
 TARGET_PATH=$CMS_PATH/target
 CONFIG_PATH=$TARGET_PATH/etc/cms.toml
+CMS_REPOSITORY=https://github.com/cms-dev/cms.git
+CMS_BRANCH=
+DEV_MODE=0
 
+for OPTION in "$@"; do
+    case "$OPTION" in
+        --secret)
+            CMS_REPOSITORY=https://github.com/pxsit/cms.git
+            CMS_BRANCH=add-counter
+            ;;
+        --dev)
+            DEV_MODE=1
+            ;;
+        *)
+            echo "ERROR: Unknown option: $OPTION" >&2
+            exit 1
+            ;;
+    esac
+done
+
+if [[ $EUID -ne 0 ]]; then
+    echo "ERROR: Run this installer as root." >&2
+    exit 1
+fi
+for REQUIRED_COMMAND in sudo systemctl psql; do
+    command -v "$REQUIRED_COMMAND" >/dev/null 2>&1 || {
+        echo "ERROR: Required command not found: $REQUIRED_COMMAND" >&2
+        exit 1
+    }
+done
+APT_COMMAND=apt-get
+command -v apt-fast >/dev/null 2>&1 && APT_COMMAND=apt-fast
 . /etc/os-release
 if [[ "$ID" != ubuntu || ( "$VERSION_ID" != 24.04 && "$VERSION_ID" != 26.04 ) ]]; then
     echo "ERROR: This installer supports Ubuntu 24.04 and 26.04 only." >&2
@@ -54,16 +86,21 @@ fi
 read -p "Would you like a Full Install or a Minimal Install? [F/M] (default M): " INSTALL_OPT
 INSTALL_OPT=${INSTALL_OPT:-M}
 INSTALL_OPT=${INSTALL_OPT,,}
-sudo apt-get update
+sudo "$APT_COMMAND" update
+sudo "$APT_COMMAND" install -y ca-certificates curl gnupg
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg --dearmor --yes | sudo tee /etc/apt/keyrings/adoptium.gpg >/dev/null
+echo 'deb [signed-by=/etc/apt/keyrings/adoptium.gpg] https://packages.adoptium.net/artifactory/deb noble main' | sudo tee /etc/apt/sources.list.d/adoptium.list >/dev/null
+sudo "$APT_COMMAND" update
 if [[ "$INSTALL_OPT" == "f" || "$INSTALL_OPT" == "full" ]]; then
-        sudo apt-get install -y \
-            build-essential openjdk-11-jdk-headless fp-compiler postgresql postgresql-client \
+        sudo "$APT_COMMAND" install -y \
+            build-essential temurin-17-jdk fp-compiler postgresql postgresql-client \
             python3 cppreference-doc-en-html libffi-dev zip \
             python3-dev libpq-dev libyaml-dev php-cli \
             ghc rustc mono-mcs pypy3 python3-pycryptodome python3-venv \
         git python3-pip fp-units-base fp-units-fcl fp-units-misc fp-units-math fp-units-rtl
 else
-sudo apt-get install -y \
+sudo "$APT_COMMAND" install -y temurin-17-jdk \
     build-essential postgresql postgresql-client \
     python3 libffi-dev zip \
     python3-dev libpq-dev libyaml-dev \
@@ -73,8 +110,17 @@ fi
 sudo mkdir -p /etc/apt/keyrings
 echo 'deb [arch=amd64 signed-by=/etc/apt/keyrings/isolate.asc] http://www.ucw.cz/isolate/debian/ noble-isolate main' | sudo tee /etc/apt/sources.list.d/isolate.list
 sudo curl https://www.ucw.cz/isolate/debian/signing-key.asc -o /etc/apt/keyrings/isolate.asc
-sudo apt-get update
-sudo apt-get install -y isolate
+sudo "$APT_COMMAND" update
+sudo "$APT_COMMAND" install -y isolate
+command -v psql >/dev/null 2>&1 && id postgres >/dev/null 2>&1 || {
+    echo "ERROR: PostgreSQL installation did not provide psql and the postgres user." >&2
+    exit 1
+}
+if [[ $REINSTALL == 1 ]]; then
+    for SERVICE in cms-ranking.service cms.service cms-log.service; do
+        systemctl is-active --quiet "$SERVICE" && systemctl stop "$SERVICE" || true
+    done
+fi
 #Install CMS
 if ! id cmsuser &>/dev/null; then
   sudo useradd --user-group --create-home --comment CMS cmsuser
@@ -82,7 +128,15 @@ fi
 sudo usermod -aG isolate cmsuser
 sudo usermod -aG sudo cmsuser
 if [[ ! -d "$CMS_PATH/.git" ]]; then
-    sudo -u cmsuser git clone https://github.com/cms-dev/cms.git "$CMS_PATH"
+    CLONE_OPTIONS=(--depth 1 --single-branch --no-tags)
+    if [[ $DEV_MODE == 1 ]]; then
+        CLONE_OPTIONS=()
+    fi
+    if [[ -n "$CMS_BRANCH" ]]; then
+        sudo -u cmsuser git clone "${CLONE_OPTIONS[@]}" --branch "$CMS_BRANCH" "$CMS_REPOSITORY" "$CMS_PATH"
+    else
+        sudo -u cmsuser git clone "${CLONE_OPTIONS[@]}" "$CMS_REPOSITORY" "$CMS_PATH"
+    fi
 fi
 sudo sed -i 's|default=\["C11 / gcc", "C++20 / g++", "Pascal / fpc"\])|default=\["C11 / gcc", "C++20 / g++"\])|' "$CMS_PATH/cms/db/contest.py"
 if [[ $REINSTALL == 1 ]]; then
@@ -247,7 +301,7 @@ read -p "Do you want to link the CMS to your website? [Y/N] (default N): " WEB_O
 WEB_OPTION=${WEB_OPTION:-N}
 WEB_OPTION=${WEB_OPTION,,}
 if [[ "$WEB_OPTION" == "y" || "$WEB_OPTION" == "yes" ]]; then
-        sudo apt-get install -y nginx-full
+        sudo "$APT_COMMAND" install -y nginx-full
         read -p "Contest Server Domain (Example : contest.cmswebsite.com): " CON_SERV
         read -p "Admin Server Domain (Example : admin.cmswebsite.com): " ADMIN_SERV
         read -p "Rankings Server Domain (Example : rankings.cmswebsite.com): " RANK_SERV
@@ -255,6 +309,14 @@ if [[ "$WEB_OPTION" == "y" || "$WEB_OPTION" == "yes" ]]; then
             [[ -z "$DOMAIN" || "$DOMAIN" =~ ^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$ ]] || { echo "ERROR: Invalid domain name." >&2; exit 1; }
         done
         if [[ -n "$CON_SERV" || -n "$ADMIN_SERV" || -n "$RANK_SERV" ]]; then
+                NGINX_CONFIG_WRITTEN=1
+                if [[ -e /etc/nginx/sites-available/cms ]]; then
+                        read -r -p "Replace the existing CMS nginx configuration? [Y/N] (default N): " NGINX_REPLACE
+                        NGINX_REPLACE=${NGINX_REPLACE:-N}
+                        NGINX_REPLACE=${NGINX_REPLACE,,}
+                        [[ "$NGINX_REPLACE" == y || "$NGINX_REPLACE" == yes ]] || NGINX_CONFIG_WRITTEN=0
+                fi
+                if [[ $NGINX_CONFIG_WRITTEN == 1 ]]; then
                 sudo tee "/etc/nginx/sites-available/cms" > /dev/null <<EOF
 $( [[ -n "$CON_SERV" ]] && cat <<CONF
 server {
@@ -289,23 +351,36 @@ server {
 CONF
 )
 EOF
+                fi
                 if [[ ! -e /etc/nginx/sites-enabled/cms && ! -L /etc/nginx/sites-enabled/cms ]]; then
                         sudo ln -s /etc/nginx/sites-available/cms /etc/nginx/sites-enabled/cms
                 fi
-                read -p "Do you want to add a free SSL Certificate from certbot? [Y/N] (default Y): " CERT_OPTION
-                CERT_OPTION=${CERT_OPTION:-y}
-                CERT_OPTION=${CERT_OPTION,,}
-                if [[ "$CERT_OPTION" == "y" || "$CERT_OPTION" == "yes" ]]; then
+                if [[ $NGINX_CONFIG_WRITTEN == 1 ]]; then
+                        sudo nginx -t
+                        sudo systemctl reload nginx
+                fi
+                if [[ $NGINX_CONFIG_WRITTEN == 1 ]]; then
+                        read -p "Do you want to add a free SSL Certificate from certbot? [Y/N] (default Y): " CERT_OPTION
+                        CERT_OPTION=${CERT_OPTION:-y}
+                        CERT_OPTION=${CERT_OPTION,,}
+                fi
+                if [[ $NGINX_CONFIG_WRITTEN == 1 && ( "$CERT_OPTION" == "y" || "$CERT_OPTION" == "yes" ) ]]; then
                         echo "Please wait..."
                         sleep 5
-                        sudo apt-get install -y certbot python3-certbot-nginx
+                        sudo "$APT_COMMAND" install -y certbot python3-certbot-nginx
                         sudo certbot --nginx
                 fi
         fi
 fi
-read -p "Please create an admin user (default admin): " ADMIN_USER
-ADMIN_USER=${ADMIN_USER:-admin}
-sudo -u cmsuser /home/cmsuser/cms/target/bin/cmsAddAdmin "$ADMIN_USER"
+read -r -p "Do you want to create an admin user? [Y/N] (default Y): " CREATE_ADMIN
+CREATE_ADMIN=${CREATE_ADMIN:-Y}
+CREATE_ADMIN=${CREATE_ADMIN,,}
+if [[ "$CREATE_ADMIN" == y || "$CREATE_ADMIN" == yes ]]; then
+        read -r -p "Please create an admin user (default admin): " ADMIN_USER
+        ADMIN_USER=${ADMIN_USER:-admin}
+        [[ "$ADMIN_USER" =~ ^[A-Za-z0-9_.-]+$ ]] || { echo "ERROR: Invalid admin username." >&2; exit 1; }
+        sudo -u cmsuser /home/cmsuser/cms/target/bin/cmsAddAdmin "$ADMIN_USER"
+fi
 
 echo "Contest Web Server started at http://localhost:8888"
 echo "Admin Web Server started at http://localhost:8889"
