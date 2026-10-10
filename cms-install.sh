@@ -100,12 +100,11 @@ if [[ "$INSTALL_OPT" == "f" || "$INSTALL_OPT" == "full" ]]; then
             ghc rustc mono-mcs pypy3 python3-pycryptodome python3-venv \
         git python3-pip fp-units-base fp-units-fcl fp-units-misc fp-units-math fp-units-rtl
 else
-sudo "$APT_COMMAND" install -y temurin-17-jdk \
+sudo "$APT_COMMAND" install -y curl python3-pip \
     build-essential postgresql postgresql-client \
     python3 libffi-dev zip \
     python3-dev libpq-dev libyaml-dev \
-    python3-pycryptodome python3-venv git cppreference-doc-en-html \
-    curl python3-pip
+    python3-pycryptodome python3-venv git cppreference-doc-en-html
 fi
 sudo mkdir -p /etc/apt/keyrings
 echo 'deb [arch=amd64 signed-by=/etc/apt/keyrings/isolate.asc] http://www.ucw.cz/isolate/debian/ noble-isolate main' | sudo tee /etc/apt/sources.list.d/isolate.list
